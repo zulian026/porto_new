@@ -54,7 +54,11 @@ export default function Header() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const handleNavClick = (e, href, section) => {
+  const handleNavClick = (
+    e: React.MouseEvent<HTMLAnchorElement>,
+    href: string,
+    section: string
+  ) => {
     e.preventDefault();
     const element = document.getElementById(section);
     if (element) {
