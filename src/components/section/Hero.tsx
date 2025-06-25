@@ -21,21 +21,20 @@ export default function Hero() {
   useEffect(() => {
     const ctx = gsap.context(() => {
       // Initial setup - hide elements
-      gsap.set(
-        [
-          badgeRef.current,
-          titleRef.current,
-          subtitleRef.current,
-          socialRef.current,
-          scrollIndicatorRef.current,
-        ],
-        {
-          opacity: 0,
-          y: 50,
-        }
-      );
+      const elementsToAnimate = [
+        badgeRef.current,
+        titleRef.current,
+        subtitleRef.current,
+        socialRef.current,
+        scrollIndicatorRef.current,
+      ].filter(Boolean); // Remove null/undefined elements
 
-      gsap.set(floatingRefs.current, {
+      gsap.set(elementsToAnimate, {
+        opacity: 0,
+        y: 50,
+      });
+
+      gsap.set(floatingRefs.current.filter(Boolean), {
         opacity: 0,
         scale: 0,
       });
@@ -44,15 +43,18 @@ export default function Hero() {
       const tl = gsap.timeline({ delay: 0.3 });
 
       // Badge animation
-      tl.to(badgeRef.current, {
-        opacity: 1,
-        y: 0,
-        duration: 0.8,
-        ease: "back.out(1.7)",
-      })
+      if (badgeRef.current) {
+        tl.to(badgeRef.current, {
+          opacity: 1,
+          y: 0,
+          duration: 0.8,
+          ease: "back.out(1.7)",
+        });
+      }
 
-        // Title animation with split effect
-        .to(
+      // Title animation with split effect
+      if (titleRef.current) {
+        tl.to(
           titleRef.current,
           {
             opacity: 1,
@@ -61,10 +63,12 @@ export default function Hero() {
             ease: "power3.out",
           },
           "-=0.4"
-        )
+        );
+      }
 
-        // Subtitle animation
-        .to(
+      // Subtitle animation
+      if (subtitleRef.current) {
+        tl.to(
           subtitleRef.current,
           {
             opacity: 1,
@@ -73,10 +77,12 @@ export default function Hero() {
             ease: "power3.out",
           },
           "-=0.6"
-        )
+        );
+      }
 
-        // Social links animation
-        .to(
+      // Social links animation
+      if (socialRef.current) {
+        tl.to(
           socialRef.current,
           {
             opacity: 1,
@@ -85,10 +91,12 @@ export default function Hero() {
             ease: "power3.out",
           },
           "-=0.4"
-        )
+        );
+      }
 
-        // Scroll indicator animation
-        .to(
+      // Scroll indicator animation
+      if (scrollIndicatorRef.current) {
+        tl.to(
           scrollIndicatorRef.current,
           {
             opacity: 1,
@@ -98,6 +106,7 @@ export default function Hero() {
           },
           "-=0.3"
         );
+      }
 
       // Floating elements animation
       floatingRefs.current.forEach((el, index) => {
@@ -131,38 +140,44 @@ export default function Hero() {
       });
 
       // Parallax effect for hero content
-      ScrollTrigger.create({
-        trigger: heroRef.current,
-        start: "top top",
-        end: "bottom top",
-        scrub: 1,
-        onUpdate: (self) => {
-          const progress = self.progress;
+      if (heroRef.current) {
+        ScrollTrigger.create({
+          trigger: heroRef.current,
+          start: "top top",
+          end: "bottom top",
+          scrub: 1,
+          onUpdate: (self) => {
+            const progress = self.progress;
 
-          // Content parallax
-          gsap.to(contentRef.current, {
-            y: progress * 100,
-            opacity: 1 - progress * 0.8,
-            duration: 0.3,
-            overwrite: true,
-          });
-
-          // Floating elements parallax
-          floatingRefs.current.forEach((el, index) => {
-            if (el) {
-              gsap.to(el, {
-                y: progress * (50 + index * 20),
-                opacity: 1 - progress,
+            // Content parallax
+            if (contentRef.current) {
+              gsap.to(contentRef.current, {
+                y: progress * 100,
+                opacity: 1 - progress * 0.8,
                 duration: 0.3,
-                overwrite: "auto",
+                overwrite: true,
               });
             }
-          });
-        },
-      });
+
+            // Floating elements parallax
+            floatingRefs.current.forEach((el, index) => {
+              if (el) {
+                gsap.to(el, {
+                  y: progress * (50 + index * 20),
+                  opacity: 1 - progress,
+                  duration: 0.3,
+                  overwrite: "auto",
+                });
+              }
+            });
+          },
+        });
+      }
 
       // Social links hover animations
       const socialLinks = socialRef.current?.querySelectorAll("a");
+      const cleanupFunctions: (() => void)[] = [];
+
       socialLinks?.forEach((link) => {
         const handleMouseEnter = () => {
           gsap.to(link, {
@@ -185,20 +200,24 @@ export default function Hero() {
         link.addEventListener("mouseenter", handleMouseEnter);
         link.addEventListener("mouseleave", handleMouseLeave);
 
-        return () => {
+        cleanupFunctions.push(() => {
           link.removeEventListener("mouseenter", handleMouseEnter);
           link.removeEventListener("mouseleave", handleMouseLeave);
-        };
+        });
       });
 
       // Enhanced scroll indicator animation
-      gsap.to(scrollIndicatorRef.current?.querySelector(".scroll-dot"), {
-        y: 15,
-        duration: 1.5,
-        ease: "power2.inOut",
-        yoyo: true,
-        repeat: -1,
-      });
+      const scrollDot =
+        scrollIndicatorRef.current?.querySelector(".scroll-dot");
+      if (scrollDot) {
+        gsap.to(scrollDot, {
+          y: 15,
+          duration: 1.5,
+          ease: "power2.inOut",
+          yoyo: true,
+          repeat: -1,
+        });
+      }
 
       // Text reveal animation for title
       const titleText = titleRef.current?.querySelector(".gradient-text");
@@ -216,6 +235,11 @@ export default function Hero() {
           }
         );
       }
+
+      // Return cleanup function for social links
+      return () => {
+        cleanupFunctions.forEach((cleanup) => cleanup());
+      };
     });
 
     // Cleanup function
@@ -336,9 +360,9 @@ export default function Hero() {
           className="text-lg md:text-xl text-gray-400 leading-relaxed max-w-4xl mx-auto font-light"
         >
           Hi, I'm{" "}
-          <span className="text-cyan-400 font-semibold">Zulian Alhisyam</span>{" "}
-          — a passionate full-stack developer who transforms innovative ideas
-          into elegant, functional digital solutions. I specialize in modern web
+          <span className="text-cyan-400 font-semibold">Zulian Alhisyam</span> —
+          a passionate full-stack developer who transforms innovative ideas into
+          elegant, functional digital solutions. I specialize in modern web
           technologies and love creating seamless user experiences that make a
           difference.
         </p>
